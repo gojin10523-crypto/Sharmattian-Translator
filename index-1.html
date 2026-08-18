@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>샤르마띠안 번역기 | Sharmattian Translator</title>
+<style>
+:root{--bg:#f5f7fa;--card:#fff;--text:#222;--muted:#687386;--p:#4a90e2;--ph:#357abd;--b:#e2e8f0;--err:#e53e3e;--warn:#fff5f5}
+[data-theme=dark]{--bg:#151922;--card:#202633;--text:#f5f7fa;--muted:#aab4c3;--p:#63b3ed;--ph:#4299e1;--b:#3a4353;--err:#fc8181;--warn:#452126}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+header{background:var(--card);border-bottom:1px solid var(--b);padding:15px 22px;display:flex;justify-content:space-between;align-items:center}.logo{font-weight:800;font-size:18px}
+button{cursor:pointer}.icon{border:0;background:none;color:var(--text);font-size:21px}.tabs{background:var(--card);display:flex;justify-content:center;border-bottom:1px solid var(--b)}
+.tab{border:0;background:none;color:var(--muted);font-weight:700;padding:15px 22px;border-bottom:3px solid transparent}.tab.active{color:var(--p);border-bottom-color:var(--p)}
+main{width:min(1000px,100%);margin:auto;padding:28px 16px 50px}.translator{display:flex;flex-direction:column;gap:16px}.langs{display:flex;justify-content:center;align-items:center;gap:15px;font-weight:800}.lang{min-width:125px;text-align:center}
+.swap{width:42px;height:42px;border-radius:50%;border:1px solid var(--b);background:var(--card);color:var(--text);font-size:20px}.boxes{display:grid;grid-template-columns:1fr 1fr;gap:16px}.box{background:var(--card);border:1px solid var(--b);border-radius:14px;overflow:hidden;box-shadow:0 4px 14px #0000000a}
+textarea{width:100%;height:220px;border:0;outline:0;resize:none;padding:20px;background:var(--card);color:var(--text);font:inherit;font-size:18px;line-height:1.6}.actions{border-top:1px solid var(--b);padding:7px 12px;display:flex;justify-content:space-between}.small{border:0;background:none;color:var(--muted);padding:7px;border-radius:7px}
+.warning{display:none;padding:12px;border-radius:9px;background:var(--warn);color:var(--err);font-size:14px}.note{text-align:right;color:var(--muted);font-size:12px}.center{text-align:center}.primary{border:0;background:var(--p);color:#fff;font-weight:800;border-radius:28px;padding:13px 35px;font-size:17px;box-shadow:0 5px 12px #4a90e233}.status{text-align:center;color:var(--muted);font-size:13px;min-height:18px}
+.dictionary{display:none}.search{width:100%;padding:13px 15px;border:1px solid var(--b);border-radius:9px;background:var(--card);color:var(--text);outline:0;margin-bottom:14px}
+.admin{background:var(--card);border:1px solid var(--b);border-radius:10px;padding:14px;margin-bottom:16px}.admin summary{cursor:pointer;font-weight:800}.form{display:grid;grid-template-columns:1.2fr 1.2fr .7fr auto;gap:8px;margin-top:12px}.form input{padding:11px;border:1px solid var(--b);border-radius:8px;background:var(--card);color:var(--text);outline:0}.form button{border:0;border-radius:8px;background:var(--p);color:#fff;padding:0 16px;font-weight:700}
+.table-wrap{overflow:auto;border:1px solid var(--b);border-radius:10px}table{width:100%;border-collapse:collapse;background:var(--card);min-width:650px}th,td{padding:13px;border-bottom:1px solid var(--b);text-align:left}th{font-size:13px;color:var(--muted)}.delete{border:0;background:none;color:var(--err)}.empty{text-align:center;color:var(--muted);padding:30px}
+@media(max-width:700px){.boxes{grid-template-columns:1fr}.form{grid-template-columns:1fr}.form button{padding:11px}}
+</style>
+</head>
+<body>
+<header><div class="logo">🇸🇲 샤르마띠안 번역기</div><button class="icon" id="theme">🌙</button></header>
+<nav class="tabs"><button class="tab active" data-t="translator">번역기</button><button class="tab" data-t="dictionary">공식 사전</button></nav>
+<main>
+<section id="translator" class="translator">
+<div class="langs"><div class="lang" id="la">한국어</div><button class="swap" id="swap">⇄</button><div class="lang" id="lb">샤르마띠안어</div></div>
+<div class="boxes">
+<div class="box"><textarea id="inp" placeholder="번역할 내용을 입력하세요..."></textarea><div class="actions"><button class="small" id="clear">🗑️ 지우기</button></div></div>
+<div class="box"><textarea id="out" readonly placeholder="번역 결과가 이곳에 표시됩니다."></textarea><div class="actions"><button class="small" id="copy">📋 복사</button><button class="small" id="tts">🔊 발음 듣기</button></div></div>
+</div>
+<div id="warning" class="warning">⚠️ 사전에 등록되지 않은 표현이 포함되어 있습니다. 임의로 번역하지 않았습니다.</div>
+<div class="note">* TTS는 샤르마띠안어의 실제 발음을 완벽하게 재현하지 않을 수 있습니다.</div>
+<div class="center"><button class="primary" id="translate">번역하기</button></div><div id="status" class="status"></div>
+</section>
+<section id="dictionary" class="dictionary">
+<input id="search" class="search" placeholder="공식 사전 검색...">
+<details class="admin"><summary>관리자 기능</summary>
+<p style="color:var(--muted);font-size:12px;margin-top:8px">주의: HTML에 관리자 비밀번호를 넣는 방식은 보안용이 아닙니다. 실제 수정 권한은 Supabase RLS 정책으로 보호해야 합니다.</p>
+<form id="form" class="form"><input id="sh" placeholder="샤르마띠안어" required><input id="ko" placeholder="한국어 뜻 (/로 여러 뜻)" required><input id="cat" placeholder="분류" required><button>+ 추가</button></form>
+</details>
+<div class="table-wrap"><table><thead><tr><th>샤르마띠안어</th><th>한국어 뜻</th><th>분류</th><th>관리</th></tr></thead><tbody id="body"></tbody></table></div>
+</section>
+</main>
+<script>
+const URL="https://toklnirgdyktfhwneglv.supabase.co";
+const KEY="여기에_네_Publishable_Key_붙여넣기";
+const TABLE="dictionary";
+const D=[
+["르 파라느 다말라두 르프라 살라디움 지리지 파샤스 따오덴 나이야 너스 지리뷔아 르뤼르리라 리 르리뤼리리아","안녕하세요. 만나서 반갑습니다. 오늘은 제가 여러분의 선생님입니다.","문장"],
+["뛰아르 아뛔스 르브르미 디 마르마스 쉴리크 아쉬르미스 프라브람","샤르마띠아","국가명"],
+["쒸띠아 뫄뛰르 라 마스프르미뛰스","전 포기하겠습니다","기타"],
+["눈떼시아 마센타 아데리아 디움","눈사람","자연/사물"],
+["엘레레레 엘레레 레렐레 엘레레렐레레","뱀","동물"],
+["뤼스 카드라미 쉐말라 아쉬스 폴미뤼미리","1","숫자"],
+["에즈뷜리아 뤼사 마바그리쉬르","2","숫자"],
+["리엡 빌리뷔아 뒤 쉬샤프라쉬스 미들륌","3","숫자"],
+["그람파 네달라마디움","감사합니다","인사"],
+["디 파트리미 샤스 르므리뮈리","생일","기념일"],
+["르뤼르리라 리 르리뤼리리아","선생님 / 스승","교육"],
+["에랍 드 브리디아 아푸스","날","시간"],
+["르 파라느 다말라두","안녕하세요","인사"],
+["코이쉬라 살라디움","축하합니다","인사/기념일"],
+["눈떼시아 마센타 아데리아","눈","자연"],
+["케챠 이셰띠아 뛰에르","케이크","기념일"],
+["프샤스 제 체프라","선물","기념일"],
+["아쉬르미스 쉬스시아","샤르마띠아어 / 샤르마띠안어","언어/과목"],
+["잉그리 라 쉬스시아","영어","과목"],
+["지리지아스 파샤스","만나주셔서","만나다"],
+["르프라 살라디움","반갑습니다","인사"],
+["리글뤼르 아뮈라","과학","과목"],
+["지리지 파샤스","만나서","만나다"],
+["너스 지리뷔아","너희들의 / 여러분의","대명사"],
+["살라마마","죄송합니다 / 미안합니다","인사"],
+["책푸스카스키","책장","사물"],
+["샤르마띠안","언어명 / 영어식 칭호","국가/언어"],
+["살라디움","높임 표현","문법"],
+["아할라마","사회","과목"],
+["쉬스시아","언어","언어"],
+["따오덴","오늘은 / 오늘에","시간"],
+["따오먼","내일은 / 내일에","시간"],
+["너스이야","너희는","대명사"],
+["파샤스","만나다","만나다"],
+["따오데","오늘","시간"],
+["따오머","내일","시간"],
+["나이야","나는 / 제가","대명사"],
+["너이야","너는","대명사"],
+["딱딱이","돌","사물"],
+["매쉬아","수학","과목"],
+["디움","사람","사람"],
+["너스","너희","대명사"]
+];
+let dict=D.map(x=>({sh:x[0],ko:x[1],cat:x[2]})), k2s=true, online=false;
+const $=x=>document.getElementById(x), esc=x=>String(x).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+async function api(path,opt={}){if(!KEY||KEY.startsWith("여기에_"))throw Error("KEY");let r=await fetch(URL+path,{...opt,headers:{apikey:KEY,Authorization:"Bearer "+KEY,"Content-Type":"application/json",...(opt.headers||{})}});if(!r.ok)throw Error(await r.text());return r.status===204?null:r.json()}
+async function load(){try{let a=await api("/rest/v1/"+TABLE+"?select=*&order=id.asc");if(Array.isArray(a)&&a.length){dict=a;online=true;$("status").textContent="✓ 공식 사전을 불러왔습니다."}else $("status").textContent="공식 사전이 비어 있어 기본 사전을 사용합니다."}catch(e){online=false;$("status").textContent="⚠️ 공식 사전 연결 실패 — 기본 사전으로 작동합니다.";console.log(e)}render()}
+function render(){let q=$("search").value.toLowerCase(),a=dict.filter(x=>(x.sh||"").toLowerCase().includes(q)||(x.ko||"").toLowerCase().includes(q)||(x.cat||"").toLowerCase().includes(q));$("body").innerHTML=a.length?a.map(x=>`<tr><td>${safe(x.sh)}</td><td>${safe(x.ko)}</td><td>${safe(x.cat)}</td><td>${online&&x.id!==undefined?`<button class="delete" data-id="${x.id}">삭제</button>`:"-"}</td></tr>`).join(""):'<tr><td colspan="4" class="empty">검색 결과가 없습니다.</td></tr>';document.querySelectorAll(".delete").forEach(b=>b.onclick=()=>del(b.dataset.id))}
+function safe(x){let d=document.createElement("div");d.textContent=x||"";return d.innerHTML}
+function translate(){let s=$("inp").value;if(!s.trim())return;$("warning").style.display="none";let maps=[];dict.forEach(x=>(k2s?x.ko:x.sh).split("/").forEach(v=>{v=v.trim();if(v)maps.push({s:v,t:k2s?x.sh:x.ko.split("/")[0].trim(),n:v.length})}));maps.sort((a,b)=>b.n-a.n);let r=s,t={},i=0;maps.forEach(m=>{let re=new RegExp(esc(m.s),"g");if(re.test(r))r=r.replace(re,()=>{let z="__T"+i+++"__";t[z]=m.t;return z})});let u=false,o="";r.split(/(__T\d+__|\s+|[.,!?;:'"()[\]{}\-–—\n])/g).forEach(x=>{if(!x)return;if(t[x]!==undefined)o+=t[x];else if(/^\s+$/.test(x)||/^[.,!?;:'"()[\]{}\-–—\n]$/.test(x))o+=x;else{o+="(미등록 단어: "+x+")";u=true}});$("out").value=o;$("warning").style.display=u?"block":"none"}
+function swap(){k2s=!k2s;$("la").textContent=k2s?"한국어":"샤르마띠안어";$("lb").textContent=k2s?"샤르마띠안어":"한국어";let x=$("inp").value;$("inp").value=$("out").value;$("out").value="";$("warning").style.display="none"}
+async function add(e){e.preventDefault();if(!online)return alert("Supabase 연결을 확인하세요.");try{let a=await api("/rest/v1/"+TABLE,{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({sh:$("sh").value.trim(),ko:$("ko").value.trim(),cat:$("cat").value.trim()})});if(a&&a[0])dict.push(a[0]);$("form").reset();render();alert("공식 사전에 추가되었습니다.")}catch(e){alert("추가 실패: Supabase INSERT 권한을 확인하세요.")}}
+async function del(id){if(!confirm("공식 사전에서 삭제할까요?"))return;try{await api("/rest/v1/"+TABLE+"?id=eq."+encodeURIComponent(id),{method:"DELETE"});dict=dict.filter(x=>String(x.id)!==String(id));render();alert("삭제되었습니다.")}catch(e){alert("삭제 실패: Supabase DELETE 권한을 확인하세요.")}}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");let t=b.dataset.t;$("translator").style.display=t=="translator"?"flex":"none";$("dictionary").style.display=t=="dictionary"?"block":"none";if(t=="dictionary")render()});
+$("swap").onclick=swap;$("translate").onclick=translate;$("clear").onclick=()=>{$("inp").value="";$("out").value="";$("warning").style.display="none"};$("search").oninput=render;$("form").onsubmit=add;
+$("copy").onclick=async()=>{if(!$("out").value)return;try{await navigator.clipboard.writeText($("out").value)}catch{$("out").select();document.execCommand("copy")}alert("복사되었습니다.")};
+$("tts").onclick=()=>{let t=$("out").value.replace(/\(미등록 단어:.*?\)/g,"").replace(/쉬스시아/g,"쉬시아");if(!t)return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(t);u.lang="ko-KR";u.rate=.9;speechSynthesis.speak(u)};
+$("theme").onclick=()=>{let d=document.body.getAttribute("data-theme")=="dark";d?document.body.removeAttribute("data-theme"):document.body.setAttribute("data-theme","dark");$("theme").textContent=d?"🌙":"☀️";localStorage.setItem("theme",d?"light":"dark")};
+if(localStorage.getItem("theme")=="dark"){document.body.setAttribute("data-theme","dark");$("theme").textContent="☀️"}load();
+</script>
+</body>
+</html>
